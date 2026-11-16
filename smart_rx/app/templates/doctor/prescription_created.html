@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Prescription Created · {{ prescription.rx_code }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-2">
+  <div class="col-lg-8">
+    <div class="card card-modern border-0 shadow-lg p-4 p-md-5">
+      
+      <!-- Success Badge & Title -->
+      <div class="text-center mb-4">
+        <div class="brand-icon-box mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.8rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+          <i class="bi bi-check-lg"></i>
+        </div>
+        <h1 class="h3 fw-bold text-success mb-1">Prescription Successfully Issued!</h1>
+        <p class="text-secondary small">Cryptographic QR code generated and saved to patient's medical records</p>
+      </div>
+
+      <!-- QR Code Presentation Box -->
+      <div class="p-4 bg-light rounded-4 border text-center mb-4">
+        <div class="qr-container mb-3 shadow-sm bg-white">
+          <img class="qr-image" src="{{ url_for('static', filename=qr_path) }}" alt="Prescription QR Code for {{ prescription.rx_code }}">
+        </div>
+
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+          <span class="fs-4 fw-bold text-dark font-monospace">{{ prescription.rx_code }}</span>
+          <button class="btn btn-outline-secondary btn-sm rounded-pill px-2" onclick="navigator.clipboard.writeText('{{ prescription.rx_code }}'); alert('Rx Code copied to clipboard!');" title="Copy Code">
+            <i class="bi bi-clipboard"></i>
+          </button>
+        </div>
+
+        <div class="d-flex justify-content-center flex-wrap gap-2 text-secondary small">
+          <span><i class="bi bi-person me-1"></i> Patient: <strong>{{ prescription.patient.name }}</strong></span>
+          <span>•</span>
+          <span><i class="bi bi-clock-history me-1"></i> Valid Until: <strong>{{ prescription.qr_expires_at.strftime('%d %b %Y, %I:%M %p') }} UTC</strong></span>
+        </div>
+      </div>
+
+      <!-- Prescribed Medicines Summary -->
+      <div class="mb-4">
+        <h2 class="h6 fw-bold text-dark mb-3">Prescription Summary</h2>
+        <div class="table-responsive">
+          <table class="table table-modern table-bordered">
+            <thead>
+              <tr>
+                <th>Medicine</th>
+                <th>Dosage</th>
+                <th>Frequency</th>
+                <th>Duration</th>
+                <th>Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in prescription.items %}
+                <tr>
+                  <td class="fw-semibold text-primary">{{ item.medicine.name }}</td>
+                  <td>{{ item.dosage }}</td>
+                  <td>{{ item.frequency }}</td>
+                  <td>{{ item.duration_days }} days</td>
+                  <td>{{ item.quantity }} units</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if prescription.notes %}
+          <div class="p-3 bg-light rounded-3 border mt-3">
+            <div class="small fw-bold text-secondary mb-1">Doctor's Clinical Notes:</div>
+            <div class="text-dark small">{{ prescription.notes }}</div>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex flex-wrap justify-content-center gap-3 pt-3 border-top">
+        <a class="btn btn-primary-custom px-4 rounded-pill shadow-sm" download="{{ prescription.rx_code }}.png" href="{{ url_for('static', filename=qr_path) }}">
+          <i class="bi bi-download me-2"></i> Download QR Image
+        </a>
+        <button class="btn btn-outline-secondary px-4 rounded-pill" onclick="window.print()">
+          <i class="bi bi-printer me-2"></i> Print Prescription
+        </button>
+        <a class="btn btn-light border px-4 rounded-pill" href="{{ url_for('doctor.prescriptions') }}">
+          <i class="bi bi-plus-circle me-1"></i> Issue Another
+        </a>
+        <a class="btn btn-light border px-4 rounded-pill" href="{{ url_for('doctor.history') }}">
+          <i class="bi bi-journal-medical me-1"></i> View History
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

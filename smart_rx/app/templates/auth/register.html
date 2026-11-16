@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Register · Smart RX Healthcare{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-md-9 col-lg-7">
+    <div class="card card-modern border-0 shadow-lg">
+      <div class="card-body p-4 p-md-5">
+
+        <!-- Title -->
+        <div class="text-center mb-4">
+          <div class="brand-icon-box mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+            <i class="bi bi-person-plus-fill"></i>
+          </div>
+          <h2 class="h4 fw-bold text-dark mb-1">Create Your Smart RX Account</h2>
+          <p class="text-secondary small">Join the connected digital prescription network</p>
+        </div>
+
+        <!-- Role Selector Tabs -->
+        <div class="mb-4">
+          <label class="form-label d-block text-center mb-2">Select Your Role</label>
+          <div class="d-flex justify-content-center gap-2 p-1 bg-light rounded-pill border">
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold role-tab-btn active" data-role="patient" id="btnRolePatient">
+              <i class="bi bi-person-fill me-1"></i> Patient
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold role-tab-btn" data-role="doctor" id="btnRoleDoctor">
+              <i class="bi bi-heart-pulse-fill me-1"></i> Doctor / Practitioner
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold role-tab-btn" data-role="pharmacy" id="btnRolePharmacy">
+              <i class="bi bi-hospital-fill me-1"></i> Pharmacy Owner
+            </button>
+          </div>
+        </div>
+
+        <!-- Registration Form -->
+        <form method="post" id="registerForm">
+          {{ form.hidden_tag() }}
+          <!-- Hidden or Synced role input -->
+          <div style="display:none;">
+            {{ form.role(id="roleSelect") }}
+          </div>
+
+          <div class="row g-3">
+            <!-- Full Name -->
+            <div class="col-md-6">
+              {{ form.name.label(class="form-label") }}
+              <div class="input-group">
+                <span class="input-group-text bg-light text-secondary border-end-0">
+                  <i class="bi bi-person"></i>
+                </span>
+                {{ form.name(class="form-control border-start-0 ps-0", placeholder="Dr. John Doe / Jane Smith") }}
+              </div>
+              {% for e in form.name.errors %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Email -->
+            <div class="col-md-6">
+              {{ form.email.label(class="form-label") }}
+              <div class="input-group">
+                <span class="input-group-text bg-light text-secondary border-end-0">
+                  <i class="bi bi-envelope"></i>
+                </span>
+                {{ form.email(class="form-control border-start-0 ps-0", placeholder="name@example.com") }}
+              </div>
+              {% for e in form.email.errors %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Phone -->
+            <div class="col-md-6">
+              {{ form.phone.label(class="form-label") }}
+              <div class="input-group">
+                <span class="input-group-text bg-light text-secondary border-end-0">
+                  <i class="bi bi-telephone"></i>
+                </span>
+                {{ form.phone(class="form-control border-start-0 ps-0", placeholder="+91 98765 43210") }}
+              </div>
+              {% for e in form.phone.errors %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- Password -->
+            <div class="col-md-6">
+              {{ form.password.label(class="form-label") }}
+              <div class="input-group">
+                <span class="input-group-text bg-light text-secondary border-end-0">
+                  <i class="bi bi-lock"></i>
+                </span>
+                {{ form.password(class="form-control border-start-0 ps-0", placeholder="Minimum 8 characters") }}
+              </div>
+              {% for e in form.password.errors %}
+                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>
+              {% endfor %}
+            </div>
+
+            <!-- DOCTOR FIELDS (Shown when Doctor is selected) -->
+            <div class="col-12 role-specific-field" id="doctorSection" style="display: none;">
+              <div class="p-3 bg-light rounded-3 border border-success border-opacity-25">
+                <div class="fw-bold text-success small mb-2 d-flex align-items-center gap-1">
+                  <i class="bi bi-patch-check-fill"></i> Medical Credentials
+                </div>
+                <div class="mb-2">
+                  {{ form.license_no.label(class="form-label") }}
+                  {{ form.license_no(class="form-control", placeholder="e.g. MCI-2024-88492 or State Council Reg. No.") }}
+                </div>
+                <div>
+                  {{ form.address.label(class="form-label", text="Clinic / Hospital Address") }}
+                  {{ form.address(class="form-control", rows="2", placeholder="Clinic address, City, State") }}
+                </div>
+              </div>
+            </div>
+
+            <!-- PATIENT FIELDS (Shown when Patient is selected) -->
+            <div class="col-12 role-specific-field" id="patientSection">
+              <div class="p-3 bg-light rounded-3 border border-primary border-opacity-25">
+                <div class="fw-bold text-primary small mb-2 d-flex align-items-center gap-1">
+                  <i class="bi bi-heart-pulse"></i> Patient Profile (Optional)
+                </div>
+                <div class="row g-2">
+                  <div class="col-md-4">
+                    {{ form.age.label(class="form-label") }}
+                    {{ form.age(class="form-control", placeholder="e.g. 28") }}
+                  </div>
+                  <div class="col-md-8">
+                    {{ form.allergies.label(class="form-label") }}
+                    {{ form.allergies(class="form-control", placeholder="e.g. Paracetamol, Penicillin, Dust") }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PHARMACY FIELDS (Shown when Pharmacy is selected) -->
+            <div class="col-12 role-specific-field" id="pharmacySection" style="display: none;">
+              <div class="p-3 bg-light rounded-3 border border-warning border-opacity-25">
+                <div class="fw-bold text-warning-emphasis small mb-2 d-flex align-items-center gap-1">
+                  <i class="bi bi-building"></i> Pharmacy Store Details
+                </div>
+                <div class="mb-2">
+                  {{ form.pharmacy_name.label(class="form-label") }}
+                  {{ form.pharmacy_name(class="form-control", placeholder="e.g. LifeCare Medicos Vijay Nagar") }}
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 mt-4">
+              {{ form.submit(class="btn btn-primary-custom w-100 py-2 fs-6 shadow-sm", value="Register Account") }}
+            </div>
+          </div>
+        </form>
+
+        <!-- Back to Login -->
+        <div class="text-center mt-4 pt-2">
+          <p class="text-secondary small mb-0">
+            Already have an account? 
+            <a href="{{ url_for('auth.login') }}" class="fw-bold text-primary text-decoration-none">
+              Sign In Here
+            </a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const roleSelect = document.getElementById('roleSelect');
+  const roleButtons = document.querySelectorAll('.role-tab-btn');
+  const doctorSec = document.getElementById('doctorSection');
+  const patientSec = document.getElementById('patientSection');
+  const pharmacySec = document.getElementById('pharmacySection');
+
+  function updateRole(role) {
+    roleSelect.value = role;
+
+    roleButtons.forEach(btn => {
+      if (btn.getAttribute('data-role') === role) {
+        btn.classList.add('active', 'btn-primary');
+        btn.classList.remove('btn-light');
+      } else {
+        btn.classList.remove('active', 'btn-primary');
+        btn.classList.add('btn-light');
+      }
+    });
+
+    if (role === 'doctor') {
+      doctorSec.style.display = 'block';
+      patientSec.style.display = 'none';
+      pharmacySec.style.display = 'none';
+    } else if (role === 'pharmacy') {
+      doctorSec.style.display = 'none';
+      patientSec.style.display = 'none';
+      pharmacySec.style.display = 'block';
+    } else {
+      doctorSec.style.display = 'none';
+      patientSec.style.display = 'block';
+      pharmacySec.style.display = 'none';
+    }
+  }
+
+  roleButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      updateRole(btn.getAttribute('data-role'));
+    });
+  });
+
+  // Initialize
+  updateRole(roleSelect.value || 'patient');
+</script>
+<style>
+  .role-tab-btn.active {
+    background: #0284c7 !important;
+    color: white !important;
+  }
+</style>
+{% endblock %}

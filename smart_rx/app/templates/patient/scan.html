@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Scan Prescription QR · Smart RX{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-2">
+  <div class="col-lg-10">
+
+    <!-- Header -->
+    <div class="text-center mb-4">
+      <div class="brand-icon-box mx-auto mb-3" style="width: 52px; height: 52px; font-size: 1.5rem;">
+        <i class="bi bi-qr-code-scan"></i>
+      </div>
+      <h1 class="h3 fw-bold text-dark mb-1">Scan Prescription QR</h1>
+      <p class="text-secondary small">Scan using your camera, upload an image file, or enter the prescription code</p>
+    </div>
+
+    {% if error %}
+      <div class="alert alert-danger card-modern shadow-sm border-0 d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-exclamation-octagon-fill fs-5 text-danger"></i>
+        <div class="flex-grow-1 fw-medium">{{ error }}</div>
+      </div>
+    {% endif %}
+
+    <div class="row g-4">
+      <!-- Left: Camera & File Upload -->
+      <div class="col-lg-7">
+        <div class="card card-modern border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-bottom py-3">
+            <h2 class="h6 fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+              <i class="bi bi-camera-video text-primary"></i> Live Camera / File Scanner
+            </h2>
+          </div>
+          <div class="card-body p-4">
+            
+            <!-- Camera Viewport Box with Laser Animation -->
+            <div class="scanner-viewport mb-3 text-center position-relative">
+              <div id="reader" style="width: 100%; min-height: 260px;"></div>
+              <div class="scanner-laser" id="laserLine" style="display: none;"></div>
+            </div>
+
+            <!-- Camera Feedback Message -->
+            <div id="scan-message" class="alert alert-light border small text-secondary py-2 text-center mb-3">
+              <i class="bi bi-camera me-1"></i> Initializing camera or use image upload below...
+            </div>
+
+            <!-- Upload QR Image Area -->
+            <div class="p-3 bg-light rounded-3 border text-center">
+              <label class="form-label fw-bold small text-dark d-block mb-2">
+                <i class="bi bi-file-earmark-arrow-up text-primary me-1"></i> Upload Prescription QR Image
+              </label>
+              <input id="qr-file" class="form-control form-control-sm mx-auto" type="file" accept="image/*" style="max-width: 320px;">
+              <small class="text-muted d-block mt-2">
+                Supports PNG, JPEG, WEBP, or screenshot of prescription QR
+              </small>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Manual Entry & Quick Samples -->
+      <div class="col-lg-5">
+        <div class="card card-modern border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-bottom py-3">
+            <h2 class="h6 fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+              <i class="bi bi-keyboard text-primary"></i> Manual Prescription Code
+            </h2>
+          </div>
+          <div class="card-body p-4 d-flex flex-column justify-content-between">
+            
+            <form method="post" id="manualForm" action="{{ url_for('patient.scan') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">Enter Rx Code or Token</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-secondary border-end-0">
+                    <i class="bi bi-hash"></i>
+                  </span>
+                  <input name="rx_code" id="rxCodeInput" class="form-control border-start-0" placeholder="e.g. RXDEMO0001" required>
+                </div>
+                <small class="text-muted">Enter the 10-14 digit prescription code issued by your doctor</small>
+              </div>
+
+              <button type="submit" class="btn btn-primary-custom w-100 py-2 shadow-sm">
+                <i class="bi bi-search me-1"></i> Find & View Prescription
+              </button>
+            </form>
+
+            <!-- Quick Demo Rx Codes -->
+            <div class="mt-4 pt-3 border-top">
+              <div class="small fw-bold text-secondary mb-2">
+                <i class="bi bi-stars text-warning me-1"></i> Sample Demo Prescriptions:
+              </div>
+              <div class="d-flex flex-column gap-2">
+                <button type="button" class="btn btn-sm btn-light border text-start d-flex justify-content-between align-items-center" onclick="fillRx('RXDEMO0001')">
+                  <span class="font-monospace fw-bold text-primary">RXDEMO0001</span>
+                  <span class="badge bg-light text-secondary border">Patient 1 · Active</span>
+                </button>
+                <button type="button" class="btn btn-sm btn-light border text-start d-flex justify-content-between align-items-center" onclick="fillRx('RXDEMO0002')">
+                  <span class="font-monospace fw-bold text-primary">RXDEMO0002</span>
+                  <span class="badge bg-light text-secondary border">Patient 2 · Active</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+  const message = document.getElementById('scan-message');
+  const laser = document.getElementById('laserLine');
+
+  function submitToken(rawText) {
+    message.innerHTML = '<span class="spinner-border spinner-border-sm text-primary me-1"></span> Processing QR verification...';
+    const f = document.createElement('form');
+    f.method = 'POST';
+    f.action = "{{ url_for('patient.scan') }}";
+    
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = 'csrf_token';
+    csrf.value = "{{ csrf_token() }}";
+    
+    const t = document.createElement('input');
+    t.type = 'hidden';
+    t.name = 'token';
+    t.value = rawText;
+    
+    f.append(csrf, t);
+    document.body.appendChild(f);
+    f.submit();
+  }
+
+  function fillRx(code) {
+    document.getElementById('rxCodeInput').value = code;
+    document.getElementById('manualForm').submit();
+  }
+
+  try {
+    const scanner = new Html5Qrcode("reader");
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length > 0) {
+        laser.style.display = 'block';
+        scanner.start(
+          cameras[0].id,
+          { fps: 10, qrbox: { width: 240, height: 240 } },
+          text => {
+            scanner.stop();
+            submitToken(text);
+          },
+          () => {}
+        ).catch(e => {
+          laser.style.display = 'none';
+          message.textContent = "Camera access unavailable. Please use image upload or enter code.";
+        });
+      } else {
+        message.textContent = "No camera hardware detected. Use image upload or manual code.";
+      }
+    }).catch(() => {
+      message.textContent = "Camera permission not granted. Use image upload or manual code.";
+    });
+
+    document.getElementById('qr-file').addEventListener('change', async e => {
+      if (e.target.files.length) {
+        message.innerHTML = '<span class="spinner-border spinner-border-sm text-primary me-1"></span> Scanning uploaded QR image...';
+        try {
+          const result = await scanner.scanFile(e.target.files[0], true);
+          submitToken(result);
+        } catch (err) {
+          message.textContent = "Could not decode QR image. Please try a clearer screenshot or enter code.";
+        }
+      }
+    });
+  } catch (ex) {
+    message.textContent = "QR Scanner ready. Use image file upload or manual code entry.";
+  }
+</script>
+{% endblock %}

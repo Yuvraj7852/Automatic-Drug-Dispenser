@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Counter QR Scanner · Pharmacy Workspace{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-2">
+  <div class="col-lg-10">
+
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+      <div>
+        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning border-opacity-50 px-3 py-1 rounded-pill mb-1">
+          <i class="bi bi-hospital me-1"></i> {{ pharmacy.name if pharmacy else 'Pharmacy Counter' }}
+        </span>
+        <h1 class="h3 fw-bold text-dark mb-0">Pharmacy Counter QR Scanner</h1>
+        <p class="text-secondary small mb-0">Scan walk-in patient QR code to verify validity, check store inventory, and dispense</p>
+      </div>
+      <div>
+        <a href="{{ url_for('orders.pharmacy_dashboard') }}" class="btn btn-outline-secondary rounded-pill px-3 btn-sm">
+          <i class="bi bi-bag-check me-1"></i> Online Orders
+        </a>
+      </div>
+    </div>
+
+    <!-- Error/Warning Alert -->
+    {% if error %}
+      <div class="alert alert-warning card-modern shadow-sm border-0 d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+        <div class="flex-grow-1 fw-medium">{{ error }}</div>
+      </div>
+    {% endif %}
+
+    <!-- Scanned Prescription Card (If Found) -->
+    {% if prescription %}
+      <div class="card card-modern border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+          <div>
+            <span class="badge bg-primary-subtle text-primary border border-primary border-opacity-25 px-3 py-1 rounded-pill mb-1">
+              Verified Prescription
+            </span>
+            <h2 class="h4 fw-bold font-monospace text-dark mb-0">{{ prescription.rx_code }}</h2>
+          </div>
+          <div>
+            {% if prescription.is_used %}
+              <span class="badge-status badge-fulfilled">
+                <i class="bi bi-check-all"></i> Already Fulfilled
+              </span>
+            {% elif now and prescription.qr_expires_at < now() %}
+              <span class="badge-status badge-expired">
+                <i class="bi bi-x-circle"></i> Expired
+              </span>
+            {% else %}
+              <span class="badge-status badge-active">
+                <i class="bi bi-check-circle"></i> Ready for Dispensing
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <!-- Metadata -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="p-3 bg-light rounded-3">
+                <div class="small text-muted">Patient Name</div>
+                <div class="fw-bold text-dark">{{ prescription.patient.name }}</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 bg-light rounded-3">
+                <div class="small text-muted">Prescribing Doctor</div>
+                <div class="fw-bold text-dark">{{ prescription.doctor.name }}</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 bg-light rounded-3">
+                <div class="small text-muted">Issue Date</div>
+                <div class="fw-bold text-dark">{{ prescription.created_at.strftime('%d %b %Y') }}</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="p-3 bg-light rounded-3">
+                <div class="small text-muted">Expiry Time</div>
+                <div class="fw-bold text-danger">{{ prescription.qr_expires_at.strftime('%d %b, %I:%M %p') }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stock Analysis Table -->
+          <div class="mb-4">
+            <h3 class="h6 fw-bold text-dark mb-3">
+              <i class="bi bi-boxes text-primary me-2"></i> Inventory Availability at {{ pharmacy.name }}
+            </h3>
+            <div class="table-responsive">
+              <table class="table table-modern table-bordered align-middle">
+                <thead>
+                  <tr>
+                    <th>Medicine</th>
+                    <th>Prescribed Dosage</th>
+                    <th>Required Qty</th>
+                    <th>In-Stock (Valid)</th>
+                    <th>Stock Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in stock_analysis %}
+                    <tr>
+                      <td class="fw-bold text-primary">{{ s.medicine }}</td>
+                      <td>{{ s.dosage }} · {{ s.frequency }}</td>
+                      <td><strong>{{ s.required }}</strong> units</td>
+                      <td>{{ s.available }} units</td>
+                      <td>
+                        {% if s.has_enough %}
+                          <span class="badge bg-success-subtle text-success border border-success border-opacity-25 px-2 py-1">
+                            <i class="bi bi-check-circle me-1"></i> Available
+                          </span>
+                        {% else %}
+                          <span class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 px-2 py-1">
+                            <i class="bi bi-x-circle me-1"></i> Low Stock
+                          </span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Dispense Action -->
+          {% if not prescription.is_used and can_fulfill %}
+            <form method="post" action="{{ url_for('pharmacy.dispense', prescription_id=prescription.id) }}" class="p-4 bg-success bg-opacity-10 rounded-4 border border-success border-opacity-25 text-center">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="fw-bold text-success mb-2 fs-5">All Prescribed Medications In Stock!</div>
+              <p class="text-secondary small mb-3">
+                Dispensing will deduct required quantities from your store stock and mark prescription as fulfilled.
+              </p>
+              <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow-sm fw-bold">
+                <i class="bi bi-bag-check-fill me-2"></i> Dispense & Complete Order
+              </button>
+            </form>
+          {% elif prescription.is_used %}
+            <div class="alert alert-secondary text-center mb-0">
+              <i class="bi bi-info-circle me-1"></i> This prescription has already been dispensed and cannot be re-used.
+            </div>
+          {% else %}
+            <div class="alert alert-danger text-center mb-0">
+              <i class="bi bi-exclamation-octagon me-1"></i> Insufficient inventory to dispense the full prescription. Please restock medicines or advise patient.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Scanner Controls -->
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="card card-modern border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-bottom py-3">
+            <h2 class="h6 fw-bold mb-0 text-dark">
+              <i class="bi bi-camera-video text-warning me-2"></i> Camera Scanner & Upload
+            </h2>
+          </div>
+          <div class="card-body p-4">
+            <div class="scanner-viewport mb-3 text-center position-relative">
+              <div id="pharm-reader" style="width: 100%; min-height: 240px;"></div>
+              <div class="scanner-laser" id="pharmLaser" style="display: none;"></div>
+            </div>
+            
+            <div id="pharm-scan-message" class="alert alert-light border small text-secondary py-2 text-center mb-3">
+              Hold patient's QR code up to camera or upload an image file
+            </div>
+
+            <div class="p-3 bg-light rounded-3 border text-center">
+              <label class="form-label fw-bold small text-dark d-block mb-2">Upload QR Screenshot / File</label>
+              <input id="pharm-qr-file" class="form-control form-control-sm mx-auto" type="file" accept="image/*" style="max-width: 320px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card card-modern border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-bottom py-3">
+            <h2 class="h6 fw-bold mb-0 text-dark">
+              <i class="bi bi-keyboard text-warning me-2"></i> Manual Code Entry
+            </h2>
+          </div>
+          <div class="card-body p-4 d-flex flex-column justify-content-between">
+            <form method="post" id="pharmManualForm" action="{{ url_for('pharmacy.scan') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">Prescription Code</label>
+                <input name="rx_code" id="pharmRxInput" class="form-control" placeholder="e.g. RXDEMO0001" required>
+                <small class="text-muted">Enter code from patient's digital or printed prescription</small>
+              </div>
+
+              <button type="submit" class="btn btn-warning w-100 py-2 fw-semibold shadow-sm">
+                <i class="bi bi-search me-1"></i> Verify Prescription
+              </button>
+            </form>
+
+            <div class="mt-4 pt-3 border-top">
+              <div class="small fw-bold text-secondary mb-2">Test with demo prescription:</div>
+              <button type="button" class="btn btn-sm btn-light border w-100 text-start font-monospace text-primary fw-bold" onclick="document.getElementById('pharmRxInput').value='RXDEMO0001'; document.getElementById('pharmManualForm').submit();">
+                RXDEMO0001 (Ready for Dispense)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+  const pMsg = document.getElementById('pharm-scan-message');
+  const pLaser = document.getElementById('pharmLaser');
+
+  function submitPharmToken(raw) {
+    pMsg.innerHTML = '<span class="spinner-border spinner-border-sm text-warning me-1"></span> Verifying prescription...';
+    const f = document.createElement('form');
+    f.method = 'POST';
+    f.action = "{{ url_for('pharmacy.scan') }}";
+    
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = 'csrf_token';
+    csrf.value = "{{ csrf_token() }}";
+    
+    const t = document.createElement('input');
+    t.type = 'hidden';
+    t.name = 'token';
+    t.value = raw;
+    
+    f.append(csrf, t);
+    document.body.appendChild(f);
+    f.submit();
+  }
+
+  try {
+    const scanner = new Html5Qrcode("pharm-reader");
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length > 0) {
+        pLaser.style.display = 'block';
+        scanner.start(
+          cameras[0].id,
+          { fps: 10, qrbox: { width: 230, height: 230 } },
+          text => {
+            scanner.stop();
+            submitPharmToken(text);
+          },
+          () => {}
+        ).catch(e => {
+          pLaser.style.display = 'none';
+          pMsg.textContent = "Camera unavailable. Use image upload or manual code.";
+        });
+      } else {
+        pMsg.textContent = "No camera hardware detected. Use file upload or enter code.";
+      }
+    }).catch(() => {
+      pMsg.textContent = "Camera permission not granted. Use file upload or enter code.";
+    });
+
+    document.getElementById('pharm-qr-file').addEventListener('change', async e => {
+      if (e.target.files.length) {
+        pMsg.innerHTML = '<span class="spinner-border spinner-border-sm text-warning me-1"></span> Scanning uploaded QR image...';
+        try {
+          const result = await scanner.scanFile(e.target.files[0], true);
+          submitPharmToken(result);
+        } catch (err) {
+          pMsg.textContent = "Could not decode QR. Please check image clarity.";
+        }
+      }
+    });
+  } catch (err) {
+    pMsg.textContent = "QR Scanner ready.";
+  }
+</script>
+{% endblock %}

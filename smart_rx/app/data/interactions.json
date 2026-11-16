@@ -1,0 +1,7 @@
+{
+  "pairs": [
+    {"medicine_a": "warfarin", "medicine_b": "ibuprofen", "warning": "Potential interaction: increased bleeding risk. Pharmacist/doctor review required."},
+    {"medicine_a": "sildenafil", "medicine_b": "nitroglycerin", "warning": "Potential interaction: dangerous blood-pressure reduction. Do not dispense without clinician review."},
+    {"medicine_a": "aspirin", "medicine_b": "warfarin", "warning": "Potential interaction: increased bleeding risk. Pharmacist/doctor review required."}
+  ]
+}

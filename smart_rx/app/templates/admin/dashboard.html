@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard · Smart RX{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-1">
+      <i class="bi bi-speedometer2 text-primary me-2"></i> System Administration
+    </h1>
+    <p class="text-secondary small mb-0">Platform overview, license verifications & medicine dispensing trends</p>
+  </div>
+  <div>
+    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary rounded-pill px-4 btn-sm">
+      <i class="bi bi-people me-1"></i> Manage All Users
+    </a>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-4 mb-4">
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-widget">
+      <div class="stat-icon blue">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div>
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-widget">
+      <div class="stat-icon green">
+        <i class="bi bi-bag-check-fill"></i>
+      </div>
+      <div>
+        <div class="stat-value">{{ total_orders }}</div>
+        <div class="stat-label">Total Orders</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-widget">
+      <div class="stat-icon amber">
+        <i class="bi bi-hourglass-split"></i>
+      </div>
+      <div>
+        <div class="stat-value">{{ pending|length }}</div>
+        <div class="stat-label">Pending Approval</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <div class="stat-widget">
+      <div class="stat-icon purple">
+        <i class="bi bi-shield-check"></i>
+      </div>
+      <div>
+        <div class="stat-value">100%</div>
+        <div class="stat-label">Security Uptime</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pending Approvals Card -->
+<div class="card card-modern border-0 shadow-sm mb-4">
+  <div class="card-header bg-white border-bottom p-3">
+    <h2 class="h6 fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-patch-exclamation text-warning"></i> Pending Doctor & Pharmacy Verifications ({{ pending|length }})
+    </h2>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-modern table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>License / Info</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in pending %}
+            <tr>
+              <td>
+                <span class="fw-bold text-dark">{{ u.name }}</span>
+              </td>
+              <td>{{ u.email }}</td>
+              <td>
+                <span class="role-pill {{ u.role }}">{{ u.role }}</span>
+              </td>
+              <td>
+                <span class="badge bg-light text-secondary border">
+                  {{ u.license_no or 'Standard Registration' }}
+                </span>
+              </td>
+              <td class="text-end">
+                <form method="post" action="{{ url_for('admin.verify_user', user_id=u.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-success rounded-pill px-3">
+                    <i class="bi bi-check-lg me-1"></i> Approve & Verify
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-secondary">
+                <i class="bi bi-check2-all text-success fs-4 d-block mb-1"></i>
+                All doctor and pharmacy practitioner accounts are verified.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Popular Medicines Analytics Chart -->
+<div class="card card-modern border-0 shadow-sm p-4">
+  <h2 class="h6 fw-bold text-dark mb-3">
+    <i class="bi bi-graph-up text-primary me-2"></i> Most Prescribed & Dispensed Medicines
+  </h2>
+  {% if popular %}
+    <canvas id="medicineChart" height="90"></canvas>
+  {% else %}
+    <p class="text-secondary small mb-0">Order data will populate chart as prescriptions are dispensed.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  {% if popular %}
+    new Chart(document.getElementById('medicineChart'), {
+      type: 'bar',
+      data: {
+        labels: {{ popular|map(attribute=0)|list|tojson }},
+        datasets: [{
+          label: 'Units Dispensed',
+          data: {{ popular|map(attribute=1)|list|tojson }},
+          backgroundColor: '#0284c7',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  {% endif %}
+</script>
+{% endblock %}

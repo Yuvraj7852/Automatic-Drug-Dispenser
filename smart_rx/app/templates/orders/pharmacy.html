@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Incoming Orders · {{ pharmacy.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+  <div>
+    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning border-opacity-50 px-3 py-1 rounded-pill mb-1">
+      <i class="bi bi-hospital me-1"></i> {{ pharmacy.name }}
+    </span>
+    <h1 class="h3 fw-bold text-dark mb-0">Pharmacy Orders Dashboard</h1>
+    <p class="text-secondary small mb-0">Process incoming patient digital prescription orders and verify delivery handover OTP</p>
+  </div>
+  <div>
+    <a href="{{ url_for('pharmacy.scan') }}" class="btn btn-warning rounded-pill px-4 shadow-sm fw-semibold">
+      <i class="bi bi-qr-code-scan me-1"></i> Counter QR Scanner
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  {% for o in orders %}
+    <div class="col-lg-6">
+      <div class="card card-modern border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+          <div>
+            <span class="fw-bold font-monospace text-primary fs-5">Order #{{ o.id }}</span>
+            <span class="badge bg-light text-secondary border ms-2">
+              {% if o.order_type == 'DELIVERY' %}🛵 Home Delivery{% else %}🏪 Store Pickup{% endif %}
+            </span>
+          </div>
+          <div>
+            {% if o.status == 'COMPLETED' %}
+              <span class="badge-status badge-fulfilled">
+                <i class="bi bi-check-all"></i> Completed
+              </span>
+            {% else %}
+              <span class="badge-status badge-pending">
+                <i class="bi bi-clock-history"></i> {{ o.status|replace('_', ' ') }}
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-body p-4 d-flex flex-column justify-content-between">
+          <div>
+            <div class="d-flex justify-content-between small text-secondary mb-2">
+              <span>Patient: <strong>{{ o.patient.name }}</strong> ({{ o.patient.phone or o.patient.email }})</span>
+              <span class="fw-bold text-success fs-6">₹{{ '%.2f'|format(o.total_price) }}</span>
+            </div>
+
+            <!-- Medicine list -->
+            <div class="p-3 bg-light rounded-3 mb-3">
+              <div class="small fw-bold text-dark mb-1">Medications to Pack:</div>
+              <ul class="list-unstyled mb-0 small">
+                {% for item in o.items %}
+                  <li class="d-flex justify-content-between py-1 border-bottom border-light">
+                    <span>{{ item.medicine.name }}</span>
+                    <span class="badge bg-white text-dark border">Qty: {{ item.quantity }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+
+          <!-- Actions & Status Updates -->
+          <div class="pt-3 border-top">
+            {% if o.status != 'COMPLETED' %}
+              <!-- Status Update Form -->
+              <form method="post" action="{{ url_for('orders.update_status', order_id=o.id) }}" class="d-flex gap-2 mb-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="status" class="form-select form-select-sm">
+                  <option value="VERIFIED" {% if o.status == 'VERIFIED' %}selected{% endif %}>Mark as Verified</option>
+                  <option value="PACKING" {% if o.status == 'PACKING' %}selected{% endif %}>Mark as Packing</option>
+                  {% if o.order_type == 'DELIVERY' %}
+                    <option value="OUT_FOR_DELIVERY" {% if o.status == 'OUT_FOR_DELIVERY' %}selected{% endif %}>Out for Delivery</option>
+                  {% else %}
+                    <option value="READY_FOR_PICKUP" {% if o.status == 'READY_FOR_PICKUP' %}selected{% endif %}>Ready for Pickup</option>
+                  {% endif %}
+                </select>
+                <button class="btn btn-outline-primary btn-sm px-3">Update</button>
+              </form>
+
+              <!-- OTP Handover Verification Form -->
+              {% if o.status in ['READY_FOR_PICKUP', 'OUT_FOR_DELIVERY'] %}
+                <form method="post" action="{{ url_for('orders.complete_order', order_id=o.id) }}" class="d-flex gap-2 p-2 bg-warning bg-opacity-10 rounded-3 border border-warning border-opacity-25">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input class="form-control form-control-sm" name="otp" placeholder="Enter Patient's 6-digit OTP" required>
+                  <button class="btn btn-success btn-sm px-3 text-nowrap">
+                    <i class="bi bi-shield-check me-1"></i> Verify & Handover
+                  </button>
+                </form>
+              {% endif %}
+            {% else %}
+              <div class="text-center text-success small fw-semibold">
+                <i class="bi bi-check-circle-fill me-1"></i> Order successfully completed and verified.
+              </div>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="col-12 text-center py-5">
+      <div class="card card-modern border-0 py-5">
+        <i class="bi bi-receipt fs-1 text-muted mb-2"></i>
+        <h5 class="fw-bold">No Incoming Orders Yet</h5>
+        <p class="text-secondary small mb-3">When patients choose {{ pharmacy.name }} to order medications, they will appear here live.</p>
+        <div>
+          <a href="{{ url_for('pharmacy.scan') }}" class="btn btn-warning rounded-pill px-4 fw-semibold">
+            <i class="bi bi-qr-code-scan me-1"></i> Open Walk-in Counter Scanner
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

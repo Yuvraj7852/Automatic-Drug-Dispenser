@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied (403) · Smart RX{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-md-7 col-lg-5 text-center">
+    <div class="card card-modern border-0 shadow-lg p-5">
+      <div class="brand-icon-box mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.8rem; background: #fee2e2; color: #ef4444;">
+        <i class="bi bi-shield-x"></i>
+      </div>
+      <h1 class="h4 fw-bold text-dark mb-2">Access Restricted</h1>
+      <p class="text-secondary small mb-4">
+        You do not have the required role permissions to view this medical workspace.
+      </p>
+      <div class="d-flex justify-content-center gap-2">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary-custom rounded-pill px-4">
+          <i class="bi bi-grid-fill me-1"></i> My Dashboard
+        </a>
+        <a href="{{ url_for('dashboard.home') }}" class="btn btn-outline-secondary rounded-pill px-4">
+          Home
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

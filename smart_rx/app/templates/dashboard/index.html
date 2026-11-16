@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard · Smart RX{% endblock %}
+
+{% block content %}
+<!-- Welcome Header Banner -->
+<div class="card card-modern border-0 mb-4 bg-gradient p-4 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="role-pill {{ current_user.role }}">{{ current_user.role|title }} Workspace</span>
+        {% if current_user.is_verified %}
+          <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50">
+            <i class="bi bi-patch-check-fill me-1"></i> Verified
+          </span>
+        {% else %}
+          <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-50">
+            <i class="bi bi-clock-history me-1"></i> Pending Verification
+          </span>
+        {% endif %}
+      </div>
+      <h1 class="h3 fw-bold text-white mb-1">Welcome back, {{ current_user.name }}</h1>
+      <p class="text-white-50 small mb-0">Smart RX Integrated Healthcare & Prescription Management Portal</p>
+    </div>
+
+    <!-- Quick Action Shortcut -->
+    <div>
+      {% if current_user.role == 'doctor' %}
+        <a class="btn btn-primary-custom shadow-sm" href="{{ url_for('doctor.prescriptions') }}">
+          <i class="bi bi-plus-circle me-1"></i> Issue New Prescription
+        </a>
+      {% elif current_user.role == 'patient' %}
+        <a class="btn btn-primary-custom shadow-sm" href="{{ url_for('patient.scan') }}">
+          <i class="bi bi-qr-code-scan me-1"></i> Scan / Enter Prescription QR
+        </a>
+      {% elif current_user.role == 'pharmacy' %}
+        <a class="btn btn-warning shadow-sm fw-semibold" href="{{ url_for('pharmacy.scan') }}">
+          <i class="bi bi-qr-code-scan me-1"></i> Open Counter Scanner
+        </a>
+      {% elif current_user.role == 'admin' %}
+        <a class="btn btn-light shadow-sm fw-semibold" href="{{ url_for('admin.users') }}">
+          <i class="bi bi-people me-1"></i> Manage Users
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Metric Stat Widgets -->
+<div class="row g-3 mb-4">
+  {% if current_user.role == 'doctor' %}
+    <div class="col-md-6 col-lg-4">
+      <div class="stat-widget">
+        <div class="stat-icon blue">
+          <i class="bi bi-file-earmark-medical"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ metrics.prescriptions_count|default(0) }}</div>
+          <div class="stat-label">Total Prescriptions</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="stat-widget">
+        <div class="stat-icon green">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ metrics.active_count|default(0) }}</div>
+          <div class="stat-label">Active / Valid Prescriptions</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="stat-widget">
+        <div class="stat-icon purple">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div>
+          <div class="stat-value">Active</div>
+          <div class="stat-label">License Status</div>
+        </div>
+      </div>
+    </div>
+
+  {% elif current_user.role == 'patient' %}
+    <div class="col-md-6 col-lg-4">
+      <div class="stat-widget">
+        <div class="stat-icon blue">
+          <i class="bi bi-capsule"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ metrics.prescriptions_count|default(0) }}</div>
+          <div class="stat-label">My Prescriptions</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="stat-widget">
+        <div class="stat-icon green">
+          <i class="bi bi-bag-check"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ metrics.orders_count|default(0) }}</div>
+          <div class="stat-label">Orders Placed</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+      <div class="stat-widget">
+        <div class="stat-icon amber">
+          <i class="bi bi-geo-alt"></i>
+        </div>
+        <div>
+          <div class="stat-value">Indore, MP</div>
+          <div class="stat-label">Current Region</div>
+        </div>
+      </div>
+    </div>
+
+  {% elif current_user.role == 'pharmacy' %}
+    <div class="col-md-6 col-lg-6">
+      <div class="stat-widget">
+        <div class="stat-icon blue">
+          <i class="bi bi-box-seam"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ metrics.orders_count|default(0) }}</div>
+          <div class="stat-label">Total Pharmacy Orders</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6 col-lg-6">
+      <div class="stat-widget">
+        <div class="stat-icon amber">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div>
+          <div class="stat-value">{{ metrics.pending_orders|default(0) }}</div>
+          <div class="stat-label">Pending Processing</div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Primary Navigation Cards -->
+<div class="mb-4">
+  <h2 class="h5 fw-bold text-dark mb-3">Workspace Actions</h2>
+  <div class="row g-3">
+    {% if current_user.role == 'doctor' %}
+      <div class="col-md-6 col-lg-4">
+        <a class="quick-action-tile" href="{{ url_for('doctor.prescriptions') }}">
+          <div class="action-tile-icon bg-primary bg-opacity-10 text-primary">
+            <i class="bi bi-pencil-square"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Create Digital Prescription</h3>
+          <p class="text-secondary small mb-0">Select patient, add medicines, configure dosage & duration, generate secure QR.</p>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <a class="quick-action-tile" href="{{ url_for('doctor.history') }}">
+          <div class="action-tile-icon bg-info bg-opacity-10 text-info">
+            <i class="bi bi-journal-text"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Prescription History</h3>
+          <p class="text-secondary small mb-0">Review all issued prescriptions, check status, and view/download QR codes.</p>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <a class="quick-action-tile" href="{{ url_for('dashboard.verify') }}">
+          <div class="action-tile-icon bg-success bg-opacity-10 text-success">
+            <i class="bi bi-qr-code-scan"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Verify Any Prescription QR</h3>
+          <p class="text-secondary small mb-0">Instant lookup and cryptographic authenticity check for any patient's QR code.</p>
+        </a>
+      </div>
+
+    {% elif current_user.role == 'patient' %}
+      <div class="col-md-6 col-lg-3">
+        <a class="quick-action-tile" href="{{ url_for('patient.scan') }}">
+          <div class="action-tile-icon bg-primary bg-opacity-10 text-primary">
+            <i class="bi bi-camera"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Scan / Enter Prescription</h3>
+          <p class="text-secondary small mb-0">Use webcam scanner, upload QR image, or enter Rx code manually.</p>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <a class="quick-action-tile" href="{{ url_for('patient.prescriptions') }}">
+          <div class="action-tile-icon bg-success bg-opacity-10 text-success">
+            <i class="bi bi-capsule"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">My Prescriptions</h3>
+          <p class="text-secondary small mb-0">View your doctor prescriptions, open QR codes, and find nearby pharmacies.</p>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <a class="quick-action-tile" href="{{ url_for('orders.mine') }}">
+          <div class="action-tile-icon bg-warning bg-opacity-10 text-warning">
+            <i class="bi bi-box-seam"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">My Orders</h3>
+          <p class="text-secondary small mb-0">Track pharmacy pickup or delivery status and get handover OTP.</p>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <a class="quick-action-tile" href="{{ url_for('patient.notifications') }}">
+          <div class="action-tile-icon bg-info bg-opacity-10 text-info">
+            <i class="bi bi-bell"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Notifications</h3>
+          <p class="text-secondary small mb-0">Stay updated on new doctor prescriptions and order delivery milestones.</p>
+        </a>
+      </div>
+
+    {% elif current_user.role == 'pharmacy' %}
+      <div class="col-md-6 col-lg-4">
+        <a class="quick-action-tile" href="{{ url_for('pharmacy.scan') }}">
+          <div class="action-tile-icon bg-warning bg-opacity-10 text-warning">
+            <i class="bi bi-qr-code-scan"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Counter QR Scanner</h3>
+          <p class="text-secondary small mb-0">Scan walk-in patient QR codes, check stock availability, and fulfill immediately.</p>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <a class="quick-action-tile" href="{{ url_for('orders.pharmacy_dashboard') }}">
+          <div class="action-tile-icon bg-primary bg-opacity-10 text-primary">
+            <i class="bi bi-receipt"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Online Orders</h3>
+          <p class="text-secondary small mb-0">Manage incoming patient orders, update packing/delivery status, verify OTP.</p>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <a class="quick-action-tile" href="{{ url_for('pharmacy.inventory') }}">
+          <div class="action-tile-icon bg-success bg-opacity-10 text-success">
+            <i class="bi bi-boxes"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Inventory & Batch Alerts</h3>
+          <p class="text-secondary small mb-0">Monitor medicine stock, low quantity alerts, and upcoming expiry batches.</p>
+        </a>
+      </div>
+
+    {% elif current_user.role == 'admin' %}
+      <div class="col-md-6 col-lg-6">
+        <a class="quick-action-tile" href="{{ url_for('admin.dashboard') }}">
+          <div class="action-tile-icon bg-primary bg-opacity-10 text-primary">
+            <i class="bi bi-speedometer2"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">Admin Analytics Dashboard</h3>
+          <p class="text-secondary small mb-0">Verify pending doctor & pharmacy registrations and monitor popular medicines.</p>
+        </a>
+      </div>
+      <div class="col-md-6 col-lg-6">
+        <a class="quick-action-tile" href="{{ url_for('admin.users') }}">
+          <div class="action-tile-icon bg-purple bg-opacity-10 text-purple">
+            <i class="bi bi-people"></i>
+          </div>
+          <h3 class="h6 fw-bold mb-1">User Management</h3>
+          <p class="text-secondary small mb-0">Inspect all registered users, roles, licenses, and verification states.</p>
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

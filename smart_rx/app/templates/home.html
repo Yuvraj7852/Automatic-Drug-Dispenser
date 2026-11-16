@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Smart RX · Intelligent Digital Prescription & Dispensing{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-wrapper p-4 p-md-5 mb-5 rounded-4 shadow-lg">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-7">
+      <span class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-50 px-3 py-1 rounded-pill mb-3 fw-semibold">
+        <i class="bi bi-shield-check me-1"></i> Next-Gen Telehealth & Prescription Security
+      </span>
+      <h1 class="display-5 fw-bold text-white mb-3">
+        Smart QR-Based Digital Prescription System
+      </h1>
+      <p class="lead text-white-50 mb-4" style="max-width: 620px;">
+        Empowering doctors to issue instant cryptographic QR prescriptions, enabling patients to discover nearby verified pharmacies with real-time medicine stock, and ensuring tamper-proof dispensing.
+      </p>
+
+      <div class="d-flex flex-wrap gap-3">
+        {% if current_user.is_authenticated %}
+          <a class="btn btn-primary-custom btn-lg shadow-sm" href="{{ url_for('dashboard.index') }}">
+            <i class="bi bi-grid-fill me-2"></i> Open Dashboard
+          </a>
+        {% else %}
+          <a class="btn btn-primary-custom btn-lg shadow-sm" href="{{ url_for('auth.login') }}">
+            <i class="bi bi-box-arrow-in-right me-2"></i> Log In
+          </a>
+          <a class="btn btn-outline-light btn-lg rounded-pill" href="{{ url_for('auth.register') }}">
+            <i class="bi bi-person-plus me-2"></i> Get Started
+          </a>
+        {% endif %}
+        <a class="btn btn-outline-info btn-lg rounded-pill" href="{{ url_for('dashboard.verify') }}">
+          <i class="bi bi-qr-code-scan me-2"></i> Verify Any QR
+        </a>
+      </div>
+    </div>
+
+    <!-- Right Hero Graphic -->
+    <div class="col-lg-5 text-center">
+      <div class="p-4 bg-white bg-opacity-10 backdrop-blur rounded-4 border border-white border-opacity-20 shadow-lg text-start">
+        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-white border-opacity-10 pb-2">
+          <span class="text-white fw-bold"><i class="bi bi-qr-code me-2 text-info"></i> Live Ecosystem</span>
+          <span class="badge bg-success text-white">Active</span>
+        </div>
+        <div class="row g-2 text-white">
+          <div class="col-6">
+            <div class="p-3 bg-white bg-opacity-10 rounded-3">
+              <div class="fs-4 fw-bold text-info">{{ stats.doctors }}</div>
+              <div class="small text-white-50">Verified Doctors</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 bg-white bg-opacity-10 rounded-3">
+              <div class="fs-4 fw-bold text-warning">{{ stats.pharmacies }}</div>
+              <div class="small text-white-50">Partner Pharmacies</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 bg-white bg-opacity-10 rounded-3">
+              <div class="fs-4 fw-bold text-success">{{ stats.prescriptions }}</div>
+              <div class="small text-white-50">Issued Prescriptions</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 bg-white bg-opacity-10 rounded-3">
+              <div class="fs-4 fw-bold text-light">{{ stats.orders }}</div>
+              <div class="small text-white-50">Fulfilled Orders</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Workflow Steps -->
+<div class="mb-5">
+  <div class="text-center mb-4">
+    <h2 class="h3 fw-bold text-dark">How Smart RX Works</h2>
+    <p class="text-secondary small">End-to-end digital prescription lifecycle with safety verification</p>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-3">
+      <div class="card card-modern h-100 p-3 card-lift text-center">
+        <div class="action-tile-icon bg-primary bg-opacity-10 text-primary mx-auto">
+          <i class="bi bi-file-earmark-medical fs-3"></i>
+        </div>
+        <h5 class="fw-bold fs-6 mb-2">1. Issue Prescription</h5>
+        <p class="text-secondary small mb-0">Doctor creates digital Rx with automated drug-drug interaction & allergy safeguards.</p>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card card-modern h-100 p-3 card-lift text-center">
+        <div class="action-tile-icon bg-success bg-opacity-10 text-success mx-auto">
+          <i class="bi bi-qr-code fs-3"></i>
+        </div>
+        <h5 class="fw-bold fs-6 mb-2">2. Secure QR Generated</h5>
+        <p class="text-secondary small mb-0">Cryptographic 32-byte opaque token QR code created instantly with 48h validity.</p>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card card-modern h-100 p-3 card-lift text-center">
+        <div class="action-tile-icon bg-warning bg-opacity-10 text-warning mx-auto">
+          <i class="bi bi-geo-alt fs-3"></i>
+        </div>
+        <h5 class="fw-bold fs-6 mb-2">3. Real-Time Pharmacy Rank</h5>
+        <p class="text-secondary small mb-0">Haversine GPS ranking shows nearest pharmacies with verified medicine batch stock.</p>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card card-modern h-100 p-3 card-lift text-center">
+        <div class="action-tile-icon bg-info bg-opacity-10 text-info mx-auto">
+          <i class="bi bi-shield-check fs-3"></i>
+        </div>
+        <h5 class="fw-bold fs-6 mb-2">4. Verified Dispensing</h5>
+        <p class="text-secondary small mb-0">Single-use QR invalidation and 6-digit OTP verification prevents double dispensing.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 1-Click Demo Section -->
+<div class="card card-modern border-0 p-4 mb-4 bg-light">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+    <div>
+      <h4 class="fw-bold mb-1"><i class="bi bi-lightning-charge-fill text-warning me-2"></i> Explore Live Demo Accounts</h4>
+      <p class="text-secondary small mb-0">Click any role to test its custom features and workflows immediately:</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{{ url_for('auth.demo_login', role='doctor') }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+        <i class="bi bi-heart-pulse-fill me-1"></i> Doctor Demo
+      </a>
+      <a href="{{ url_for('auth.demo_login', role='patient') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+        <i class="bi bi-person-fill me-1"></i> Patient Demo
+      </a>
+      <a href="{{ url_for('auth.demo_login', role='pharmacy') }}" class="btn btn-outline-warning btn-sm rounded-pill px-3">
+        <i class="bi bi-hospital-fill me-1"></i> Pharmacy Demo
+      </a>
+      <a href="{{ url_for('auth.demo_login', role='admin') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-shield-lock-fill me-1"></i> Admin Demo
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

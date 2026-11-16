@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}My Medicine Orders · Smart RX{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-1">
+      <i class="bi bi-box-seam text-primary me-2"></i> My Medicine Orders
+    </h1>
+    <p class="text-secondary small mb-0">Track pharmacy preparation, dispatch, and OTP verification for your orders</p>
+  </div>
+  <div>
+    <a href="{{ url_for('patient.prescriptions') }}" class="btn btn-outline-primary rounded-pill px-4 btn-sm">
+      <i class="bi bi-capsule me-1"></i> Order from Prescriptions
+    </a>
+  </div>
+</div>
+
+<div class="card card-modern border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-modern table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Pharmacy</th>
+            <th>Type</th>
+            <th>Total Amount</th>
+            <th>Order Date</th>
+            <th>Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+            <tr>
+              <td>
+                <span class="fw-bold font-monospace text-primary">#{{ o.id }}</span>
+              </td>
+              <td>
+                <div class="fw-bold text-dark">{{ o.pharmacy.name }}</div>
+                <div class="small text-muted">{{ o.pharmacy.address }}</div>
+              </td>
+              <td>
+                {% if o.order_type == 'DELIVERY' %}
+                  <span class="badge bg-light text-dark border">
+                    <i class="bi bi-bicycle text-primary me-1"></i> Home Delivery
+                  </span>
+                {% else %}
+                  <span class="badge bg-light text-dark border">
+                    <i class="bi bi-shop text-warning me-1"></i> Store Pickup
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="fw-bold text-dark">₹{{ '%.2f'|format(o.total_price) }}</span>
+              </td>
+              <td>
+                <div class="small text-dark">{{ o.created_at.strftime('%d %b %Y') }}</div>
+                <div class="small text-muted">{{ o.created_at.strftime('%I:%M %p') }}</div>
+              </td>
+              <td>
+                {% if o.status == 'COMPLETED' %}
+                  <span class="badge-status badge-fulfilled">
+                    <i class="bi bi-check-all"></i> Completed
+                  </span>
+                {% elif o.status in ['OUT_FOR_DELIVERY', 'READY_FOR_PICKUP'] %}
+                  <span class="badge-status badge-active">
+                    <i class="bi bi-truck"></i> {{ o.status|replace('_', ' ')|title }}
+                  </span>
+                {% else %}
+                  <span class="badge-status badge-pending">
+                    <i class="bi bi-clock-history"></i> {{ o.status|title }}
+                  </span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{{ url_for('orders.track', order_id=o.id) }}" class="btn btn-sm btn-primary-custom rounded-pill px-3">
+                  <i class="bi bi-geo-alt me-1"></i> Track Order
+                </a>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-secondary">
+                <i class="bi bi-box-seam fs-1 text-muted d-block mb-2"></i>
+                <div class="fw-semibold">No orders placed yet</div>
+                <p class="small text-muted mb-3">Order prescribed medicines from verified nearby pharmacies</p>
+                <a href="{{ url_for('patient.prescriptions') }}" class="btn btn-primary-custom btn-sm rounded-pill px-4">
+                  Browse My Prescriptions
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

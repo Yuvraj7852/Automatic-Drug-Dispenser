@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}My Prescriptions · Smart RX{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-1">
+      <i class="bi bi-capsule text-primary me-2"></i> My Prescriptions
+    </h1>
+    <p class="text-secondary small mb-0">View all digital prescriptions issued to you by verified doctors</p>
+  </div>
+  <div>
+    <a href="{{ url_for('patient.scan') }}" class="btn btn-primary-custom shadow-sm rounded-pill px-4">
+      <i class="bi bi-qr-code-scan me-1"></i> Scan / Add Rx
+    </a>
+  </div>
+</div>
+
+<div class="card card-modern border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-modern table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Rx Code</th>
+            <th>Doctor</th>
+            <th>Date Issued</th>
+            <th>Medicines</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in prescriptions %}
+            <tr>
+              <td>
+                <span class="fw-bold font-monospace text-primary fs-6">{{ p.rx_code }}</span>
+              </td>
+              <td>
+                <div class="fw-semibold text-dark">{{ p.doctor.name }}</div>
+                <div class="small text-muted">{{ p.doctor.license_no or 'Registered Doctor' }}</div>
+              </td>
+              <td>
+                <div class="text-dark">{{ p.created_at.strftime('%d %b %Y') }}</div>
+                <div class="small text-muted">{{ p.created_at.strftime('%I:%M %p') }}</div>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">
+                  {{ p.items|length }} medicine(s)
+                </span>
+              </td>
+              <td>
+                {% if p.is_used %}
+                  <span class="badge-status badge-fulfilled">
+                    <i class="bi bi-check-all"></i> Fulfilled
+                  </span>
+                {% elif now and p.qr_expires_at < now() %}
+                  <span class="badge-status badge-expired">
+                    <i class="bi bi-x-circle"></i> Expired
+                  </span>
+                {% else %}
+                  <span class="badge-status badge-active">
+                    <i class="bi bi-lightning-charge-fill"></i> Active
+                  </span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <!-- 1-Click Show QR Code Modal Button -->
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-1" 
+                  onclick="showQrModal('{{ p.rx_code }}', '{{ url_for('static', filename='qr_codes/' ~ p.rx_code ~ '.png') }}')">
+                  <i class="bi bi-qr-code me-1"></i> Show QR
+                </button>
+                
+                <a href="{{ url_for('patient.prescription_detail', prescription_id=p.id) }}" class="btn btn-sm btn-light border rounded-pill px-3 me-1">
+                  Details
+                </a>
+
+                {% if not p.is_used %}
+                  <a href="{{ url_for('patient.pharmacies', prescription_id=p.id) }}" class="btn btn-sm btn-success rounded-pill px-3">
+                    <i class="bi bi-shop me-1"></i> Order Now
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-5 text-secondary">
+                <i class="bi bi-file-earmark-medical fs-1 text-muted d-block mb-2"></i>
+                <div class="fw-semibold">No prescriptions found</div>
+                <p class="small text-muted mb-3">When your doctor issues a prescription, it will appear here automatically.</p>
+                <a href="{{ url_for('patient.scan') }}" class="btn btn-primary-custom btn-sm rounded-pill px-4">
+                  Scan a Prescription QR
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory & Batch Alerts · {{ pharmacy.name if pharmacy else 'Pharmacy' }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+  <div>
+    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning border-opacity-50 px-3 py-1 rounded-pill mb-1">
+      <i class="bi bi-hospital me-1"></i> {{ pharmacy.name if pharmacy else 'Pharmacy' }}
+    </span>
+    <h1 class="h3 fw-bold text-dark mb-0">Medicine Inventory & Batch Alerts</h1>
+    <p class="text-secondary small mb-0">Track stock levels, upcoming batch expiry alerts, and replenishment needs</p>
+  </div>
+  <div>
+    <a href="{{ url_for('pharmacy.scan') }}" class="btn btn-warning rounded-pill px-4 shadow-sm fw-semibold">
+      <i class="bi bi-qr-code-scan me-1"></i> Counter Scanner
+    </a>
+  </div>
+</div>
+
+<!-- Alerts Section -->
+<div class="row g-3 mb-4">
+  {% if low_stock %}
+    <div class="col-md-6">
+      <div class="card card-modern border-0 border-start border-warning border-4 shadow-sm p-3 bg-warning bg-opacity-10">
+        <div class="fw-bold text-warning-emphasis d-flex align-items-center gap-2 mb-2">
+          <i class="bi bi-exclamation-triangle-fill fs-5"></i> Low Stock Warning (Less than 10 units)
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          {% for s in low_stock %}
+            <span class="badge bg-white text-dark border">
+              {{ s.medicine.name }}: <strong class="text-danger">{{ s.quantity }} left</strong>
+            </span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if expiring %}
+    <div class="col-md-6">
+      <div class="card card-modern border-0 border-start border-danger border-4 shadow-sm p-3 bg-danger bg-opacity-10">
+        <div class="fw-bold text-danger d-flex align-items-center gap-2 mb-2">
+          <i class="bi bi-calendar-x-fill fs-5"></i> Expiring Soon / Expired (Within 30 Days)
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          {% for s in expiring %}
+            <span class="badge bg-white text-dark border">
+              {{ s.medicine.name }}: <strong class="text-danger">{{ s.expiry_date.strftime('%d %b %Y') }}</strong>
+            </span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Stock Inventory Table -->
+<div class="card card-modern border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom p-3">
+    <h2 class="h6 fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-boxes text-primary"></i> Current Medicine Stock ({{ rows|length }} items)
+    </h2>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-modern table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Medicine Name</th>
+            <th>Category / Schedule</th>
+            <th>Current Stock</th>
+            <th>Batch No.</th>
+            <th>Expiry Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in rows %}
+            <tr>
+              <td>
+                <div class="fw-bold text-dark">{{ s.medicine.name }}</div>
+                <div class="small text-muted">{{ s.medicine.generic_name or 'Generic' }}</div>
+              </td>
+              <td>
+                <span class="badge bg-light text-secondary border">
+                  {{ s.medicine.category }} · {{ s.medicine.schedule_type }}
+                </span>
+              </td>
+              <td>
+                {% if s.quantity < 10 %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger border-opacity-25 px-2 py-1 fw-bold">
+                    {{ s.quantity }} units (Low)
+                  </span>
+                {% else %}
+                  <span class="badge bg-success-subtle text-success border border-success border-opacity-25 px-2 py-1 fw-bold">
+                    {{ s.quantity }} units
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="font-monospace small text-dark">{{ s.batch_no }}</span>
+              </td>
+              <td>
+                <span class="small">{{ s.expiry_date.strftime('%d %b %Y') }}</span>
+              </td>
+              <td>
+                {% if s.quantity == 0 %}
+                  <span class="badge bg-danger text-white">Out of Stock</span>
+                {% elif s.quantity < 10 %}
+                  <span class="badge bg-warning text-dark">Restock Needed</span>
+                {% else %}
+                  <span class="badge bg-success text-white">In Stock</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-center py-5 text-secondary">
+                No inventory records registered for this pharmacy.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
